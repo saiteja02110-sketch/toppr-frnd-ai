@@ -4,41 +4,34 @@ function askTopperFrnd() {
 
     if (!input) return alert("Type something!");
 
-    output.innerHTML = "<i>🤔 Thinking...</i>";
+    output.innerHTML = "<i>🤔 Searching...</i>";
 
-    let bestMatch = null;
-    let maxScore = 0;
+    for (let i = 0; i < dataset.length; i++) {
+        let item = dataset[i];
 
-    dataset.forEach(item => {
-        if (!item.question || !item.answer) return;
+        if (!item.question || !item.answer) continue;
 
-        const question = item.question.toLowerCase();
-        const words = input.split(" ");
+        if (item.question.toLowerCase().includes(input)) {
+            output.innerText = `💡 Answer:\n\n${item.answer}`;
+            return;
+        }
+    }
 
-        let score = 0;
+    // fallback: keyword search
+    for (let i = 0; i < dataset.length; i++) {
+        let item = dataset[i];
 
-        words.forEach(word => {
-            if (question.includes(word)) {
-                score += 2;
+        if (!item.question || !item.answer) continue;
+
+        let words = input.split(" ");
+
+        for (let word of words) {
+            if (item.question.toLowerCase().includes(word)) {
+                output.innerText = `💡 Answer:\n\n${item.answer}`;
+                return;
             }
-        });
-
-        // bonus if full sentence partially matches
-        if (question.includes(input)) {
-            score += 5;
         }
+    }
 
-        if (score > maxScore) {
-            maxScore = score;
-            bestMatch = item;
-        }
-    });
-
-    setTimeout(() => {
-        if (bestMatch && maxScore > 0) {
-            output.innerText = `💡 Answer:\n\n${bestMatch.answer}`;
-        } else {
-            output.innerText = "🤔 No match found.\n👉 Try simple keywords like: stack, array, loop";
-        }
-    }, 300);
+    output.innerText = "❌ No match found. Try simple keywords like: stack, array, loop.";
 }
