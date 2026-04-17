@@ -1,90 +1,217 @@
+// ===============================
+// GLOBAL VARIABLES
+// ===============================
 let currentMode = "AI Study Coach";
+let dataset = [];
+let timer = null;
 
-function setMode(mode) {
+// ===============================
+// LOAD DATASET
+// ===============================
+fetch("final_dataset.json")
+  .then(res => res.json())
+  .then(data => {
+      dataset = data;
+      console.log("✅ Dataset loaded:", dataset.length);
+  })
+  .catch(err => {
+      console.error("❌ Failed to load dataset", err);
+  });
+
+
+// ===============================
+// MODE SWITCH
+// ===============================
+function setMode(mode, event) {
     currentMode = mode;
-    document.getElementById("featureTitle").innerText = mode;
-    // Remove active class from all and add to clicked
-    document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-}
+    document.getElementById("featureTitle").innerText = "🧠 " + mode;
 
-async function askTopperFrnd() {
-    const input = document.getElementById("studentInput").value;
-    const output = document.getElementById("aiResponse");
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.classList.remove('active');
+    });
 
-    if(!input) return alert("Please type something first!");
-
-    output.innerHTML = "<i>Topper Frnd is thinking...</i>";
-
-    try {
-        const response = await fetch(
-            "https://api-inference.huggingface.co/models/toppr-frnd-ai/topper-frnd-ai", 
-            {
-                headers: { 
-                    Authorization: "Bearer YOUR_HF_TOKEN", // Replace with your actual token
-                    "Content-Type": "application/json" 
-                },
-                method: "POST",
-                body: JSON.stringify({ "inputs": `Mode: ${currentMode}. User Question: ${input}` }),
-            }
-        );
-
-        const data = await response.json();
-        // Hugging Face returns an array, we take the first text result
-        output.innerText = data[0].generated_text || "I'm a bit stuck. Ask me again!";
-    } catch (error) {
-        output.innerText = "Error connecting to the AI. Check your internet or API token.";
+    if (event) {
+        event.currentTarget.classList.add('active');
     }
 }
-let timer;
 
-function startLightningPractice() {
-    let timeLeft = 600; // 10 Minutes in seconds
+
+// ===============================
+// ASK TOPPER FRIEND (MAIN AI)
+// ===============================
+function askTopperFrnd() {
+    const input = document.getElementById("studentInput").value.toLowerCase();
     const output = document.getElementById("aiResponse");
-    
-    // Clear any old timers
-    clearInterval(timer);
-    
-    // Start Countdown
-    timer = setInterval(() => {
-        if(timeLeft <= 0) {
-            clearInterval(timer);
-            alert("Time is up! Let's see how you did.");
+
+    if (!input) return alert("Please type something!");
+
+    output.innerHTML = "<i>🤔 Thinking...</i>";
+
+    let bestMatch = null;
+
+    // Simple smart search
+    dataset.forEach(item => {
+        if (
+            item.question &&
+            (item.question.toLowerCase().includes(input) ||
+             input.includes(item.question.toLowerCase()))
+        ) {
+            bestMatch = item;
+        }
+    });
+
+    setTimeout(() => {
+        if (bestMatch) {
+            if (bestMatch.type === "mcq") {
+                output.innerText =
+                    `🎯 Quiz Question:\n\n${bestMatch.question}\n\nOptions:\n${bestMatch.options}\n\nAnswer: ${bestMatch.answer}`;
+            } 
+            else if (bestMatch.type === "coding") {
+                output.innerText =
+                    `💻 Coding Problem:\n\n${bestMatch.question}\n\n💡 Solution:\n${bestMatch.answer}`;
+            } 
+            else {
+                output.innerText =
+                    `💡 Topper Friend (${currentMode}):\n\n${bestMatch.answer}`;
+            }
         } else {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            document.getElementById("featureTitle").innerText = `⚡ Practice Timer: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-            timeLeft--;
+            output.innerText =
+                "🤔 I couldn't find an exact answer.\nTry asking about coding, science, math, or general topics!";
+        }
+    }, 500);
+}
+
+
+// ===============================
+// QUIZ ENGINE (5 MCQs)
+// ===============================
+function startQuiz() {
+    const output = document.getElementById("aiResponse");
+
+    let mcqs = dataset.filter(d => d.type === "mcq");
+
+    if (mcqs.length === 0) {
+        output.innerText = "No MCQs available in dataset!";
+        return;
+    }
+
+    // Shuffle
+    mcqs = mcqs.sort(() => 0.5 - Math.random()).slice(0, 5);
+
+    let text = "🎯 QUIZ ENGINE\n\n";
+
+    mcqs.forEach((q, i) => {
+        text += `${i + 1}. ${q.question}\n${q.options}\n\n`;
+    });
+
+    text += "👉 Answers are hidden. Try yourself first!";
+
+    output.innerText = text;
+}
+
+
+// ===============================
+// LIGHTNING PRACTICE (10 MIN TEST)
+// ===============================
+function startLightningPractice() {
+    const output = document.getElementById("aiResponse");
+
+    let mcqs = dataset.filter(d => d.type === "mcq").slice(0, 5);
+    let coding = dataset.filter(d => d.type === "coding").slice(0, 2);
+
+    let text = "⚡ LIGHTNING PRACTICE (10 MIN TEST)\n\n";
+
+    text += "📝 5 MCQs:\n\n";
+    mcqs.forEach((q, i) => {
+        text += `${i + 1}. ${q.question}\n${q.options}\n\n`;
+    });
+
+    text += "💻 2 CODING QUESTIONS:\n\n";
+    coding.forEach((c, i) => {
+        text += `${i + 1}. ${c.question}\n\n`;
+    });
+
+    output.innerText = text;
+
+    // Start timer
+    startTimer(600); // 10 minutes
+}
+
+
+// ===============================
+// TIMER FUNCTION
+// ===============================
+function startTimer(seconds) {
+    clearInterval(timer);
+
+    const title = document.getElementById("featureTitle");
+
+    timer = setInterval(() => {
+        if (seconds <= 0) {
+            clearInterval(timer);
+            alert("⏰ Time's up!");
+        } else {
+            let min = Math.floor(seconds / 60);
+            let sec = seconds % 60;
+            title.innerText = `⚡ Time Left: ${min}:${sec < 10 ? '0' : ''}${sec}`;
+            seconds--;
         }
     }, 1000);
-
-    // Ask AI to generate the questions
-    document.getElementById("studentInput").value = "Generate 5 MCQs and 2 coding questions on Data Structures for a 10-minute test.";
-    askTopperFrnd(); // This triggers the AI call
 }
-async function startQuiz() {
+
+
+// ===============================
+// SMART NOTES
+// ===============================
+function generateNotes() {
+    const input = document.getElementById("studentInput").value.toLowerCase();
     const output = document.getElementById("aiResponse");
-    output.innerHTML = "<i>Generating a custom quiz for you...</i>";
 
-    const quizPrompt = "Act as a Topper. Generate 3 Multiple Choice Questions (MCQs) about Computer Science with options A, B, C, and D. Provide the correct answers at the bottom.";
+    if (!input) return alert("Enter topic!");
 
-    try {
-        const response = await fetch(
-            "https://api-inference.huggingface.co/models/YOUR_USERNAME/topper-frnd-ai", 
-            {
-                headers: { 
-                    Authorization: "Bearer YOUR_HF_TOKEN", 
-                    "Content-Type": "application/json" 
-                },
-                method: "POST",
-                body: JSON.stringify({ "inputs": quizPrompt }),
-            }
-        );
+    let notes = dataset
+        .filter(d => d.question.toLowerCase().includes(input))
+        .slice(0, 3);
 
-        const data = await response.json();
-        // Formatting the response to look nice
-        output.innerHTML = `<pre style="white-space: pre-wrap;">${data[0].generated_text}</pre>`;
-    } catch (error) {
-        output.innerText = "Error generating quiz. Please check your API connection.";
+    if (notes.length === 0) {
+        output.innerText = "No notes found!";
+        return;
     }
+
+    let text = "📝 SMART NOTES\n\n";
+
+    notes.forEach(n => {
+        text += `• ${n.answer}\n\n`;
+    });
+
+    output.innerText = text;
+}
+
+
+// ===============================
+// SMART PLANNER (BASIC)
+// ===============================
+function smartPlanner() {
+    const output = document.getElementById("aiResponse");
+
+    let plan = `
+📅 SMART STUDY PLAN
+
+Morning:
+- Revise concepts
+- Practice MCQs
+
+Afternoon:
+- Coding practice
+- Solve problems
+
+Evening:
+- Mock test
+- Review mistakes
+
+Night:
+- Quick revision + notes
+`;
+
+    output.innerText = plan;
 }
