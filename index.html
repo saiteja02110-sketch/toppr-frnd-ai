@@ -2,51 +2,204 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Topper Frnd AI - Dashboard</title>
+    <title>Topper Frnd AI</title>
     <style>
-        :root { --primary: #1a73e8; --bg: #f8f9fa; --text: #202124; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; }
-        
-        /* Sidebar Styles */
-        .sidebar { width: 280px; background: white; border-right: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; }
-        .logo { font-size: 24px; font-weight: bold; color: var(--primary); margin-bottom: 30px; }
-        .menu-item { padding: 15px; margin: 5px 0; border-radius: 10px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
-        .menu-item:hover { background: #e8f0fe; color: var(--primary); }
-        .active { background: var(--primary); color: white !important; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: white;
+            margin: 0;
+        }
 
-        /* Main Content Styles */
-        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
-        .chat-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); max-width: 800px; margin: auto; }
-        textarea { width: 100%; height: 100px; border: 1px solid #ddd; border-radius: 10px; padding: 15px; font-size: 16px; resize: none; box-sizing: border-box; }
-        button { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 25px; cursor: pointer; font-size: 16px; margin-top: 10px; transition: 0.3s; }
-        button:hover { opacity: 0.9; transform: scale(1.05); }
+        header {
+            background: #1e293b;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
 
-        /* AI Output Box */
-        #aiResponse { margin-top: 30px; padding: 20px; border-left: 5px solid var(--primary); background: #f1f3f4; border-radius: 5px; min-height: 50px; line-height: 1.6; }
+        .container {
+            display: flex;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: #1e293b;
+            padding: 10px;
+            height: 100vh;
+        }
+
+        .menu-item {
+            padding: 12px;
+            margin: 8px 0;
+            background: #334155;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .menu-item:hover {
+            background: #475569;
+        }
+
+        .active {
+            background: #22c55e !important;
+        }
+
+        /* Main Area */
+        .main {
+            flex: 1;
+            padding: 20px;
+        }
+
+        input {
+            width: 70%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #22c55e;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #16a34a;
+        }
+
+        #aiResponse {
+            margin-top: 20px;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 100px;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body>
 
+<header>
+    🤖 Topper Frnd AI
+</header>
+
+<div class="container">
+
+    <!-- Sidebar -->
     <div class="sidebar">
-        <div class="logo">🎓 Topper Frnd</div>
-        <div class="menu-item active" onclick="setMode('Coach')">🤖 AI Study Coach</div>
-        <div class="menu-item" onclick="setMode('Code')">💻 Code Mentor</div>
-        <div class="menu-item" onclick="setMode('Notes')">📝 Smart Notes</div>
-        <div class="menu-item" onclick="setMode('Quiz')">🎯 Quiz Engine</div>
-        <div class="menu-item" onclick="setMode('Planner')">📅 Smart Planner</div>
-        <div class="menu-item" onclick="setMode('Lightning')">⚡ Lightning Practice</div>
+
+        <div class="menu-item active" onclick="setMode('AI Study Coach', event)">🧠 AI Study Coach</div>
+        <div class="menu-item" onclick="setMode('Code Mentor', event)">💻 Code Mentor</div>
+        <div class="menu-item" onclick="setMode('Smart Notes', event)">📝 Smart Notes</div>
+        <div class="menu-item" onclick="setMode('Quiz Engine', event)">🎯 Quiz Engine</div>
+        <div class="menu-item" onclick="setMode('Smart Planner', event)">📅 Smart Planner</div>
+        <div class="menu-item" onclick="startLightningPractice(event)">⚡ Lightning Practice</div>
+
     </div>
 
-    <div class="main-content">
-        <h2 id="featureTitle">AI Study Coach</h2>
-        <div class="chat-container">
-            <textarea id="studentInput" placeholder="Ask your 'Topper Frnd' anything..."></textarea>
-            <button onclick="askTopperFrnd()">Get Explanation</button>
-            <div id="aiResponse">Your personalized explanation will appear here...</div>
-        </div>
+    <!-- Main -->
+    <div class="main">
+
+        <h2 id="featureTitle">🧠 AI Study Coach</h2>
+
+        <input type="text" id="studentInput" placeholder="Ask your question here..." />
+        <button onclick="askTopperFrnd()">Ask</button>
+        <button onclick="startQuiz()">Generate Quiz</button>
+
+        <div id="aiResponse">Your AI response will appear here...</div>
+
     </div>
 
-    <script src="script.js"></script>
+</div>
+
+<!-- Script -->
+<script>
+let currentMode = "AI Study Coach";
+let dataset = [];
+
+// Load dataset
+fetch("final_dataset.json")
+  .then(res => res.json())
+  .then(data => dataset = data);
+
+// Change mode
+function setMode(mode, event) {
+    currentMode = mode;
+    document.getElementById("featureTitle").innerText = "🧠 " + mode;
+
+    document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+}
+
+// Ask AI
+function askTopperFrnd() {
+    const input = document.getElementById("studentInput").value.toLowerCase();
+    const output = document.getElementById("aiResponse");
+
+    if (!input) return alert("Type something!");
+
+    let found = null;
+
+    dataset.forEach(item => {
+        if (item.question.toLowerCase().includes(input)) {
+            found = item;
+        }
+    });
+
+    if (found) {
+        if (found.type === "mcq") {
+            output.innerText = `🎯 Quiz Question:\n${found.question}\n\nOptions:\n${found.options}\n\nAnswer: ${found.answer}`;
+        } else {
+            output.innerText = `💡 Topper Friend:\n${found.answer}`;
+        }
+    } else {
+        output.innerText = "🤔 I don't know this yet. Try another question!";
+    }
+}
+
+// Quiz generator
+function startQuiz() {
+    const output = document.getElementById("aiResponse");
+
+    let mcqs = dataset.filter(d => d.type === "mcq").slice(0, 5);
+
+    let text = "🎯 Quiz:\n\n";
+    mcqs.forEach((q, i) => {
+        text += `${i+1}. ${q.question}\n${q.options}\n\n`;
+    });
+
+    output.innerText = text;
+}
+
+// Lightning Practice
+function startLightningPractice() {
+    const output = document.getElementById("aiResponse");
+
+    let mcqs = dataset.filter(d => d.type === "mcq").slice(0, 5);
+    let coding = dataset.filter(d => d.type === "coding").slice(0, 2);
+
+    let text = "⚡ 10-Minute Test\n\n";
+
+    text += "📝 MCQs:\n";
+    mcqs.forEach((q, i) => {
+        text += `${i+1}. ${q.question}\n${q.options}\n\n`;
+    });
+
+    text += "💻 Coding Questions:\n";
+    coding.forEach((c, i) => {
+        text += `${i+1}. ${c.question}\n\n`;
+    });
+
+    output.innerText = text;
+}
+</script>
+
 </body>
 </html>
