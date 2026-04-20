@@ -1,26 +1,28 @@
-{
-  "type": "qa",
-  "question": "What is stack?",
-  "answer": "Stack is a LIFO (Last In First Out) data structure."
-},
-{
-  "type": "qa",
-  "question": "What is queue?",
-  "answer": "Queue is a FIFO (First In First Out) data structure."
-},
-{
-  "type": "qa",
-  "question": "What is array?",
-  "answer": "Array is a collection of elements stored in contiguous memory."
-},
-{
-  "type": "coding",
-  "question": "Write factorial program in C",
-  "answer": "int fact(int n){ if(n==0) return 1; else return n*fact(n-1); }"
-},
-{
-  "type": "mcq",
-  "question": "Which data structure uses FIFO?",
-  "options": "A) Stack B) Queue C) Tree D) Graph",
-  "answer": "B) Queue"
-}
+[
+  {
+    "type": "qa",
+    "question": "What is stack?",
+    "answer": "Stack is a LIFO (Last In First Out) data structure."
+  },
+  {
+    "type": "qa",
+    "question": "What is queue?",
+    "answer": "Queue is a FIFO (First In First Out) data structure."
+  },
+  {
+    "type": "qa",
+    "question": "What is array?",
+    "answer": "Array is a collection of elements stored in contiguous memory."
+  },
+  {
+    "type": "coding",
+    "question": "Write factorial program in C",
+    "answer": "int fact(int n){ if(n==0) return 1; else return n*fact(n-1); }"
+  },
+  {
+    "type": "mcq",
+    "question": "Which data structure uses FIFO?",
+    "options": "A) Stack B) Queue C) Tree D) Graph",
+    "answer": "B) Queue"
+  }
+]
